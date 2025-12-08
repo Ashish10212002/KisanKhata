@@ -15,6 +15,10 @@ public class Transaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    public Long getId() {
+        return this.id;
+    }
+    
     @Column(name = "farm_id", nullable = true)
     private Long farmId;
 
