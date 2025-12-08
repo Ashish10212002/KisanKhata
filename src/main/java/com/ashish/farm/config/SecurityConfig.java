@@ -38,32 +38,32 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource())) 
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
             .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // 1. ALLOW STATIC REACT FILES (HTML, JS, CSS, Images)
-                // This lets the browser download your frontend app without logging in
-                .requestMatchers("/", "/index.html", "/assets/**", "/*.ico", "/*.css", "/*.js").permitAll()
-
-                // 2. ALLOW THE "CATCH-ALL" ROUTE (For Page Refreshes)
-                // This matches paths like /dashboard, /farms without extensions
-                .requestMatchers("/{path:[^\\.]*}").permitAll()
-
-                // 3. API AUTH ENDPOINTS (Login/Signup)
+                // -----------------------------------------------------------
+                // 1. PUBLIC API ENDPOINTS (Login/Signup) -> ALLOW
+                // -----------------------------------------------------------
                 .requestMatchers("/api/auth/**").permitAll()
 
-                // 4. PROTECTED API ENDPOINTS (Require JWT Token)
-                .requestMatchers("/api/farms/**", "/api/transactions/**", "/api/ai/**").authenticated()
+                // -----------------------------------------------------------
+                // 2. PROTECTED API ENDPOINTS (Data) -> REQUIRE LOGIN
+                // -----------------------------------------------------------
+                // Any link starting with /api/ MUST have a token
+                .requestMatchers("/api/**").authenticated()
 
-                // 5. LOCK EVERYTHING ELSE
-                .anyRequest().authenticated()
+                // -----------------------------------------------------------
+                // 3. FRONTEND (EVERYTHING ELSE) -> ALLOW ALL
+                // -----------------------------------------------------------
+                // If it's not an API call, it must be the React App (HTML, CSS, JS, SVG)
+                // This fixes the 403 error on assets immediately.
+                .anyRequest().permitAll()
             );
 
         http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
-
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
