@@ -38,13 +38,26 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource())) // <--- Enables the bean below
+            .cors(cors -> cors.configurationSource(corsConfigurationSource())) 
             .csrf(csrf -> csrf.disable())
             .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                // 1. ALLOW STATIC REACT FILES (HTML, JS, CSS, Images)
+                // This lets the browser download your frontend app without logging in
+                .requestMatchers("/", "/index.html", "/assets/**", "/*.ico", "/*.css", "/*.js").permitAll()
+
+                // 2. ALLOW THE "CATCH-ALL" ROUTE (For Page Refreshes)
+                // This matches paths like /dashboard, /farms without extensions
+                .requestMatchers("/{path:[^\\.]*}").permitAll()
+
+                // 3. API AUTH ENDPOINTS (Login/Signup)
                 .requestMatchers("/api/auth/**").permitAll()
+
+                // 4. PROTECTED API ENDPOINTS (Require JWT Token)
                 .requestMatchers("/api/farms/**", "/api/transactions/**", "/api/ai/**").authenticated()
-                .anyRequest().permitAll()
+
+                // 5. LOCK EVERYTHING ELSE
+                .anyRequest().authenticated()
             );
 
         http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
@@ -55,10 +68,9 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // ALLOW YOUR VERCEL APP
         configuration.setAllowedOrigins(List.of(
             "http://localhost:5173", 
-            "https://kishan-khata.vercel.app" // <--- NO SLASH at the end!
+            "https://kishan-khata.vercel.app"
         ));
         
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
