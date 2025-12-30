@@ -45,7 +45,7 @@ public class SecurityConfig {
                 // -----------------------------------------------------------
                 // 1. PUBLIC API ENDPOINTS (Login/Signup) -> ALLOW
                 // -----------------------------------------------------------
-                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/auth/**","/api/health").permitAll()
 
                 // -----------------------------------------------------------
                 // 2. PROTECTED API ENDPOINTS (Data) -> REQUIRE LOGIN
